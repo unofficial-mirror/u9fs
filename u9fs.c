@@ -12,6 +12,7 @@
 #include <errno.h>	/* for errno */
 #include <stdio.h>	/* for remove [sic] */
 #include <fcntl.h>	/* for O_RDONLY, etc. */
+#include <limits.h>	/* for PATH_MAX */
 
 #include <sys/socket.h>	/* various networking crud */
 #include <netinet/in.h>
@@ -147,6 +148,7 @@ int	chatty9p = 0;
 int	network = 1;
 int	old9p = -1;
 int	authed;
+char*	root;
 User*	none;
 
 Auth *authmethods[] = {	/* first is default */
@@ -170,6 +172,17 @@ char isfrog[256]={
 	['/']	1,
 	[0x7f]	1,
 };
+
+char*
+rootpath(char *path)
+{
+	static char buf[PATH_MAX];
+
+	if(root == nil)
+		return path;
+	snprintf(buf, sizeof buf, "%s%s", root, path);
+	return buf;
+}
 
 void
 getfcallnew(int fd, Fcall *fc, int have)
@@ -702,7 +715,7 @@ stat2dir(char *path, struct stat *st, Dir *d)
 void
 rread(Fcall *rx, Fcall *tx)
 {
-	char *e, *path;
+	char *e, *path, *rpath;
 	uchar *p, *ep;
 	int n;
 	Fid *fid;
@@ -762,7 +775,8 @@ rread(Fcall *rx, Fcall *tx)
 				fid->dirent = nil;
 				continue;
 			}
-			path = estrpath(fid->path, fid->dirent->d_name, 0);
+			rpath = rootpath(fid->path);
+			path = estrpath(rpath, fid->dirent->d_name, 0);
 			memset(&st, 0, sizeof st);
 			if(stat(path, &st) < 0){
 				fprint(2, "dirread: stat(%s) failed: %s\n", path, strerror(errno));
@@ -828,7 +842,7 @@ rwrite(Fcall *rx, Fcall *tx)
 void
 rclunk(Fcall *rx, Fcall *tx)
 {
-	char *e;
+	char *e, *rpath;
 	Fid *fid;
 
 	if((fid = oldfidex(rx->fid, -1, &e)) == nil){
@@ -844,8 +858,10 @@ rclunk(Fcall *rx, Fcall *tx)
 			}
 		}
 	}
-	else if(fid->omode != -1 && fid->omode&ORCLOSE)
-		remove(fid->path);
+	else if(fid->omode != -1 && fid->omode&ORCLOSE){
+		rpath = rootpath(fid->path);
+		remove(rpath);
+	}
 	freefid(fid);
 }
 
@@ -889,7 +905,7 @@ rstat(Fcall *rx, Fcall *tx)
 void
 rwstat(Fcall *rx, Fcall *tx)
 {
-	char *e;
+	char *e, *opath, *npath;
 	char *p, *old, *new, *dir;
 	gid_t gid;
 	Dir d;
@@ -959,9 +975,10 @@ rwstat(Fcall *rx, Fcall *tx)
 	 * leave truncate until last.
 	 * (see above comment about atomicity).
 	 */
-	if((u32int)d.mode != (u32int)~0 && chmod(fid->path, unixmode(&d)) < 0){
+	opath = estrdup(rootpath(fid->path));
+	if((u32int)d.mode != (u32int)~0 && chmod(opath, unixmode(&d)) < 0){
 		if(chatty9p)
-			fprint(2, "chmod(%s, 0%luo) failed\n", fid->path, unixmode(&d));
+			fprint(2, "chmod(%s, 0%luo) failed\n", opath, unixmode(&d));
 		seterror(tx, strerror(errno));
 		return;
 	}
@@ -971,18 +988,18 @@ rwstat(Fcall *rx, Fcall *tx)
 
 		t.actime = 0;
 		t.modtime = d.mtime;
-		if(utime(fid->path, &t) < 0){
+		if(utime(opath, &t) < 0){
 			if(chatty9p)
-				fprint(2, "utime(%s) failed\n", fid->path);
+				fprint(2, "utime(%s) failed\n", opath);
 			seterror(tx, strerror(errno));
 			return;
 		}
 	}
 
 	if(gid != (gid_t)-1 && gid != fid->st.st_gid){
-		if(chown(fid->path, (uid_t)-1, gid) < 0){
+		if(chown(opath, (uid_t)-1, gid) < 0){
 			if(chatty9p)
-				fprint(2, "chgrp(%s, %d) failed\n", fid->path, gid);
+				fprint(2, "chgrp(%s, %d) failed\n", opath, gid);
 			seterror(tx, strerror(errno));
 			return;
 		}
@@ -998,21 +1015,24 @@ rwstat(Fcall *rx, Fcall *tx)
 			return;
 		}
 		new = estrpath(dir, d.name, 1);
-		if(strcmp(old, new) != 0 && rename(old, new) < 0){
+		npath = rootpath(new);
+		if(strcmp(old, new) != 0 && rename(opath, npath) < 0){
 			if(chatty9p)
 				fprint(2, "rename(%s, %s) failed\n", old, new);
 			seterror(tx, strerror(errno));
 			free(new);
 			free(dir);
+			free(opath);
 			return;
 		}
 		fid->path = new;
 		free(old);
 		free(dir);
+		free(opath);
 	}
 
-	if((u64int)d.length != (u64int)~0 && truncate(fid->path, d.length) < 0){
-		fprint(2, "truncate(%s, %lld) failed\n", fid->path, d.length);
+	if((u64int)d.length != (u64int)~0 && truncate(opath, d.length) < 0){
+		fprint(2, "truncate(%s, %lld) failed\n", opath, d.length);
 		seterror(tx, strerror(errno));
 		return;
 	}
@@ -1329,8 +1349,11 @@ freefid(Fid *f)
 int
 fidstat(Fid *fid, char **ep)
 {
-	if(stat(fid->path, &fid->st) < 0){
-		fprint(2, "fidstat(%s) failed\n", fid->path);
+	char *rpath;
+
+	rpath = rootpath(fid->path);
+	if(stat(rpath, &fid->st) < 0){
+		fprint(2, "fidstat(%s) failed\n", rpath);
 		if(ep)
 			*ep = strerror(errno);
 		return -1;
@@ -1419,7 +1442,7 @@ groupchange(User *u, User *g, char **ep)
 int
 userperm(User *u, char *path, int type, int need)
 {
-	char *p, *q;
+	char *p, *q, *rpath;
 	int i, have;
 	struct stat st;
 	User *g;
@@ -1429,13 +1452,15 @@ userperm(User *u, char *path, int type, int need)
 		fprint(2, "bad type %d in userperm\n", type);
 		return -1;
 	case Tdot:
-		if(stat(path, &st) < 0){
-			fprint(2, "userperm: stat(%s) failed\n", path);
+		rpath = rootpath(path);
+		if(stat(rpath, &st) < 0){
+			fprint(2, "userperm: stat(%s) failed\n", rpath);
 			return -1;
 		}
 		break;
 	case Tdotdot:
-		p = estrdup(path);
+		rpath = rootpath(path);
+		p = estrdup(rpath);
 		if((q = strrchr(p, '/'))==nil){
 			fprint(2, "userperm(%s, ..): bad path\n", p);
 			free(p);
@@ -1447,7 +1472,7 @@ userperm(User *u, char *path, int type, int need)
 			*(q+1) = '\0';
 		if(stat(p, &st) < 0){
 			fprint(2, "userperm: stat(%s) (dotdot of %s) failed\n",
-				p, path);
+				p, rpath);
 			free(p);
 			return -1;
 		}
@@ -1484,11 +1509,12 @@ userperm(User *u, char *path, int type, int need)
 int
 userwalk(User *u, char **path, char *elem, Qid *qid, char **ep)
 {
-	char *npath;
+	char *npath, *rpath;
 	struct stat st;
 
 	npath = estrpath(*path, elem, 1);
-	if(stat(npath, &st) < 0){
+	rpath = rootpath(npath);
+	if(stat(rpath, &st) < 0){
 		free(npath);
 		*ep = strerror(errno);
 		return -1;
@@ -1503,6 +1529,7 @@ int
 useropen(Fid *fid, int omode, char **ep)
 {
 	int a, o;
+	char *rpath;
 
 	/*
 	 * Check this anyway, to try to head off problems later.
@@ -1544,7 +1571,8 @@ useropen(Fid *fid, int omode, char **ep)
 			*ep = Eperm;
 			return -1;
 		}
-		if((fid->dir = opendir(fid->path)) == nil){
+		rpath = rootpath(fid->path);
+		if((fid->dir = opendir(rpath)) == nil){
 			*ep = strerror(errno);
 			return -1;
 		}
@@ -1559,7 +1587,8 @@ useropen(Fid *fid, int omode, char **ep)
 		}
 		 *
 		 */
-		if((fid->fd = open(fid->path, o)) < 0){
+		rpath = rootpath(fid->path);
+		if((fid->fd = open(rpath, o)) < 0){
 			*ep = strerror(errno);
 			return -1;
 		}
@@ -1572,10 +1601,12 @@ int
 usercreate(Fid *fid, char *elem, int omode, long perm, char **ep)
 {
 	int o, m;
-	char *opath, *npath;
+	char *opath, *npath, *rpath;
 	struct stat st, parent;
+	User *u;
 
-	if(stat(fid->path, &parent) < 0){
+	rpath = rootpath(fid->path);
+	if(stat(rpath, &parent) < 0){
 		*ep = strerror(errno);
 		return -1;
 	}
@@ -1592,7 +1623,7 @@ usercreate(Fid *fid, char *elem, int omode, long perm, char **ep)
 	m = (perm & DMDIR) ? 0777 : 0666;
 	perm = perm & (~m | (fid->st.st_mode & m));
 
-	npath = estrpath(fid->path, elem, 1);
+	npath = estrpath(rpath, elem, 1);
 	if(perm & DMDIR){
 		if((omode&~ORCLOSE) != OREAD){
 			*ep = Eperm;
@@ -1644,8 +1675,28 @@ usercreate(Fid *fid, char *elem, int omode, long perm, char **ep)
 		}
 	}
 
+	/*
+	 * Change ownership if a default user is specified.
+	 */
+	if(defaultuser)
+	if((u = uname2user(defaultuser)) == nil
+	|| chown(npath, u->id, -1) < 0){
+		fprint(2, "chown after create on %s failed\n", npath);
+		remove(npath);	/* race */
+		free(npath);
+		fid->path = opath;
+		if(fid->fd >= 0){
+			close(fid->fd);
+			fid->fd = -1;
+		}else{
+			closedir(fid->dir);
+			fid->dir = nil;
+		}
+		return -1;
+	}
+
 	opath = fid->path;
-	fid->path = npath;
+	fid->path = estrpath(opath, elem, 1);
 	if(fidstat(fid, ep) < 0){
 		fprint(2, "stat after create on %s failed\n", npath);
 		remove(npath);	/* race */
@@ -1668,7 +1719,10 @@ usercreate(Fid *fid, char *elem, int omode, long perm, char **ep)
 int
 userremove(Fid *fid, char **ep)
 {
-	if(remove(fid->path) < 0){
+	char *rpath;
+
+	rpath = rootpath(fid->path);
+	if(remove(rpath) < 0){
 		*ep = strerror(errno);
 		return -1;
 	}
@@ -1755,8 +1809,7 @@ main(int argc, char **argv)
 	umask(0);
 
 	if(argc == 1)
-		if(chroot(argv[0]) < 0)
-			sysfatal("chroot '%s' failed", argv[0]);
+		root = argv[0];
 
 	none = uname2user("none");
 
