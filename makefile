@@ -19,6 +19,7 @@ CFLAGS=-g -I.
 LD=cc
 LDFLAGS=
 LDTAIL=
+DESTROOT=/usr/local
 
 OFILES=\
 	authnone.o\
@@ -58,6 +59,6 @@ clean:
 	rm -f *.o u9fs
 
 install: u9fs
-	cp u9fs ../../bin
+	install u9fs $(DESTROOT)/bin
 
 .PHONY: clean install
