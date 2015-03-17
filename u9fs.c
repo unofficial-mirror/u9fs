@@ -1785,8 +1785,11 @@ main(int argc, char **argv)
 	if(fd < 0)
 		sysfatal("cannot open log '%s'", logfile);
 
-	if(dup2(fd, 2) < 0)
-		sysfatal("cannot dup fd onto stderr");
+	if(fd != 2){
+		if(dup2(fd, 2) < 0)
+			sysfatal("cannot dup fd onto stderr");
+		close(fd);
+	}
 	fprint(2, "u9fs\nkill %d\n", (int)getpid());
 
 	fmtinstall('F', fcallconv);
