@@ -100,5 +100,5 @@ smprint(char *fmt, ...)
 	va_end(temp);
 	va_end(arg);
 	printcol = scol;
-	return strdup(out);
+	return strdup(buf);
 }
