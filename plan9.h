@@ -193,6 +193,7 @@ struct Dir {
 
 long readn(int, void*, long);
 void remotehost(char*, int);
+void sysfatal(char*, ...);
 
 enum {
 	NAMELEN = 28,
