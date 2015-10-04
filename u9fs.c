@@ -73,6 +73,7 @@ void*	erealloc(void*, size_t);
 char*	estrdup(char*);
 char*	estrpath(char*, char*, int);
 int	okuser(char*);
+int	groupchange(User*, User*, char**);
 
 void	rversion(Fcall*, Fcall*);
 void	rauth(Fcall*, Fcall*);
