@@ -1,4 +1,5 @@
-U9fs runs on many POSIX-compatible systems, including Linux and MacOS X.
+*U9fs* serves the Plan 9 protocol 9P from user-space on other operating systems.
+runs on many POSIX-compatible systems, including Linux and MacOS X.
 Currently, it must first be compiled. See the comments at the top of the makefile
 for a few special instructions. Ordinarily, you should be able to type:
 
