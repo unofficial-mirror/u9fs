@@ -1,5 +1,6 @@
 *U9fs* serves the Plan 9 protocol 9P from user-space on other operating systems.
-runs on many POSIX-compatible systems, including Linux and MacOS X.
+
+It runs on many POSIX-compatible systems, including Linux and MacOS X.
 Currently, it must first be compiled. See the comments at the top of the makefile
 for a few special instructions. Ordinarily, you should be able to type:
 
@@ -62,6 +63,6 @@ recipes known so far.
 	If you are running the Mac OS X firewall you will need to add an entry to pass the *9pfs* protocol in:
 	**SystemPreferences->Sharing->Firewall**
 
-	The example **9pfs.plist** uses 9p authentication, described in detail in *u9fs*(4), and serves the root of the  MacOS X file system.
+	The example **9pfs.plist** uses 9p authentication, described in detail in *u9fs.man*, and serves the root of the  MacOS X file system.
 	It also assumes the executable lives in **/bin/9/u9fs**. Edit the configuration file to change those settings.
 		-- charles.forsyth@gmail.com, September 2015, based on an entry in the Plan 9 wiki
