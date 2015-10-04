@@ -125,6 +125,7 @@ struct	Fconv
 extern	char*	doprint(char*, char*, char*, va_list *argp);
 extern	int	print(char*, ...);
 extern	char*	seprint(char*, char*, char*, ...);
+extern	char*	smprint(char*, ...);
 extern	int	snprint(char*, int, char*, ...);
 extern	int	sprint(char*, char*, ...);
 extern	int	fprint(int, char*, ...);
