@@ -11,7 +11,7 @@ Unfortunately, installing the program to run automatically under inetd, xinetd o
 is rather system-dependent. (MacOS X is an extreme case.) The rest of this file will list
 recipes known so far.
 
-* Ubuntu 10.10 (and earlier) and 11.04, with xinetd and authrhosts
+* **Ubuntu 10.10** (and earlier) and 11.04, with xinetd and authrhosts
 	I keep u9fs in a new directory /bin/9, but it could easily be in /usr/local/bin.
 	It is not setuid. I use the following in /etc/xinetd.d/u9fs:
 		service u9fs
@@ -28,7 +28,7 @@ recipes known so far.
 	I list acceptable machines in /etc/hosts.equiv, and the server trusts what they send.
 	-- charles.forsyth@gmail.com, May 2011
 
-* Debian 5.0 (and earlier), with inetd, and authp9any
+* **Debian 7** (and earlier), with inetd, and authp9any
 	I use this configuration on several virtual servers.
 	I keep u9fs in a new directory /bin/9. It is not setuid. I use the following in /etc/inetd.conf:
 		u9fs stream tcp nowait root /bin/9/u9fs u9fs -a p9any
@@ -38,16 +38,16 @@ recipes known so far.
 	The machine is not an internal machine, and I use p9any authentication (usual Plan 9 variant).
 	It takes the secrets from /etc/u9fs.key, which had better be well-protected.
 	There are three lines: the secret; the authentication user ("bootes"); the authentication domain.
-		-- charles.forsyth@gmail.com, May 2011
+		-- charles.forsyth@gmail.com, May 2015
 
-* OpenBSD 4.3, with inetd, and authrhosts; same on FreeBSD 4.8(!)
+* **OpenBSD 4.3**, with inetd, and authrhosts; same on FreeBSD 4.8(!)
 	I use this configuration on an internal gateway.
 	I keep u9fs in directory /bin/9. /etc/inetd.conf has the following line:
 		p9fs        stream  tcp     nowait  root    /bin/9/u9fs u9fs
 	The protocol name "p9fs" is already in /etc/services.
 		-- charles.forsyth@gmail.com, May 2011
 
-* MacOS X (last tested on OS X Yosemete (10.10.5)
+* **MacOS X** (last tested on OS X Yosemete (10.10.5)
 	U9fs can be started via ssh using *srvssh*(4) on Plan 9, or more conventionally by MacOS X's *launchd*(8).
 	Launchd needs a configuration file. A sample is included here in the file **p9fs.list**.
 	To make the service available globally, it should be installed as **/Library/LaunchDaemons/9pfs.plist**.
