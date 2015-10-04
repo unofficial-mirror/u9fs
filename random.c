@@ -1,9 +1,7 @@
 #include <plan9.h>
 #include <fcall.h>
 #include <u9fs.h>
-#include <stdlib.h>
 #include <sys/time.h>
-#include <fcntl.h>
 
 static long
 getseed(void)

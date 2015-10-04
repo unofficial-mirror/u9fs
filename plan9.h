@@ -45,6 +45,7 @@ typedef unsigned long long int  uint64_t;
 #endif /* va_copy */
 #include <sys/types.h>
 #include <string.h>		/* for memmove */
+#include <fcntl.h>	/* for O_RDONLY, etc. */
 #include <unistd.h>		/* for write */
 
 #define ulong p9ulong		/* because sys/types.h has some of these sometimes */
@@ -205,4 +206,3 @@ enum {
 void	key_setup(char key[DESKEYLEN], char expandedkey[128]);
 void	block_cipher(char expandedkey[128], char buf[8], int decrypting);
 
-void	getremotehostname(char*, int);
