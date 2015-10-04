@@ -204,3 +204,5 @@ enum {
 #define DESKEYLEN 7
 void	key_setup(char key[DESKEYLEN], char expandedkey[128]);
 void	block_cipher(char expandedkey[128], char buf[8], int decrypting);
+
+void	getremotehostname(char*, int);
