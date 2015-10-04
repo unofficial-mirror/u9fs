@@ -317,10 +317,10 @@ p9anyinit(void)
 	passtokey(authkey, f[0]);
 	authid = strdup(f[1]);
 	authdom = strdup(f[2]);
-	haveprotosmsg = malloc(strlen("p9sk1") + 1 + strlen(authdom) + 1);
-	sprint(haveprotosmsg, "p9sk1@%s", authdom);
-	needprotomsg = malloc(strlen("p9sk1") + 1 + strlen(authdom) + 1);
-	sprint(needprotomsg, "p9sk1 %s", authdom);
+	haveprotosmsg = smprint("p9sk1@%s", authdom);
+	needprotomsg = smprint("p9sk1 %s", authdom);
+	if(haveprotosmsg == nil || needprotomsg == nil)
+		sysfatal("out of memory");
 }
 
 typedef struct AuthSession {
@@ -525,7 +525,7 @@ p9anyclunk(Fcall *rx, Fcall *tx)
 		fprint(2, "p9anyclunk: afid %d\n", rx->fid);
 	safefree(sp->uname);
 	safefree(sp->aname);
-	memset(sp, 0, sizeof(sp));
+	memset(sp, 0, sizeof(*sp));
 	free(sp);
 	return nil;
 }
