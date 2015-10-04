@@ -190,7 +190,7 @@ rootpath(char *path)
 
 	if(root == nil)
 		return path;
-	snprintf(buf, sizeof buf, "%s%s", root, path);
+	snprint(buf, sizeof buf, "%s%s", root, path);
 	return buf;
 }
 
