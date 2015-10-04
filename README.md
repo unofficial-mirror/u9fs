@@ -49,7 +49,7 @@ recipes known so far.
 
 * **MacOS X** (last tested on OS X Yosemete (10.10.5)
 	U9fs can be started via ssh using *srvssh*(4) on Plan 9, or more conventionally by MacOS X's *launchd*(8).
-	Launchd needs a configuration file. A sample is included here in the file **[p9fs.list](p9fs.list)**.
+	Launchd needs a configuration file. A sample is included here in the file **p9fs.list**.
 	To make the service available globally, it should be installed as **/Library/LaunchDaemons/9pfs.plist**.
 	If instead it is installed in **/Library/LaunchAgents**, it will run only when a user is logged in;
 	if installed in **$HOME/Library/LaunchAgents** it will run only when that particular user is logged in.
