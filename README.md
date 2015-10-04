@@ -13,7 +13,7 @@ Unfortunately, installing the program to run automatically under inetd, xinetd o
 is rather system-dependent. (MacOS X is an extreme case.) The rest of this file will list
 recipes known so far.
 
-* **Ubuntu 10.10** (and earlier) and 11.04, with xinetd and authrhosts
+* **Ubuntu 11.04** (and earlier, and later), with xinetd and authrhosts
 	I keep u9fs in a new directory /bin/9, but it could easily be in /usr/local/bin.
 	It is not setuid. I use the following in /etc/xinetd.d/u9fs:
 		service u9fs
