@@ -15,7 +15,7 @@
 # If you need <inttypes.h> copy sun-inttypes.h to inttypes.h.
 #
 #CC=cc
-CFLAGS=-g -I.
+CFLAGS=-g -O -I.
 LD=cc
 LDFLAGS=
 LDTAIL=
