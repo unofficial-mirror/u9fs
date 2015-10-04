@@ -1,5 +1,9 @@
+#ifdef __APPLE__
+#define	_DARWIN_C_SOURCE
+#else
 /* magic to get SUSV2 standard, including pread, pwrite*/
 #define _XOPEN_SOURCE 500
+#endif
 /* magic to get 64-bit pread/pwrite */
 #define _LARGEFILE64_SOURCE
 /* magic to get 64-bit stat on Linux, maybe others */
@@ -105,6 +109,7 @@ extern	int	runetochar(char*, Rune*);
 extern	int	chartorune(Rune*, char*);
 extern	int	runelen(long);
 extern	int	utflen(char*);
+extern	char*	utfrune(char*, long);
 extern	char*	strecpy(char*, char*, char*);
 extern	int	tokenize(char*, char**, int);
 extern	int	getfields(char*, char**, int, int, char*);
