@@ -9,6 +9,8 @@
 /* magic to get 64-bit stat on Linux, maybe others */
 #define _FILE_OFFSET_BITS 64
 
+#define	_DEFAULT_SOURCE	1	/* also for ruserok */
+
 #ifdef sgi
 #define _BSD_TYPES	1	/* for struct timeval */
 #include <sys/select.h>

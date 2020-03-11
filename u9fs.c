@@ -1430,7 +1430,9 @@ groupchange(User *u, User *g, char **ep)
 		return -1;
 	}
 
-	setreuid(0,0);
+	if(setreuid(0, 0) < 0){
+		/* can't get super-user, other calls will fail */
+	}
 	if(setregid(-1, g->id) < 0){
 		fprint(2, "setegid(%s/%d) failed in groupchange\n", g->name, g->id);
 		*ep = strerror(errno);
