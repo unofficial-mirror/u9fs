@@ -1041,6 +1041,7 @@ rwstat(Fcall *rx, Fcall *tx)
 		free(old);
 		free(dir);
 		free(opath);
+		opath = npath;
 	}
 
 	if((u64int)d.length != (u64int)~0 && truncate(opath, d.length) < 0){
